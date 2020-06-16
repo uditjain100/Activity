@@ -6,14 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/text_view"
-        android:layout_width="wrap_content"
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="Hello World!"
-        android:textAllCaps="true"
-        android:textSize="30dp"
-        android:textStyle="bold" />
+        android:layout_margin="10dp"
+        android:backgroundTint="@color/colorPrimary"
+        app:cardCornerRadius="25dp"
+        app:strokeColor="@color/colorAccent"
+        app:strokeWidth="5dp">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_margin="5dp"
+            android:background="@color/White" />
+
+    </com.google.android.material.card.MaterialCardView>
 
 </RelativeLayout>

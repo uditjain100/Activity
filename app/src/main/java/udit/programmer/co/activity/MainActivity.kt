@@ -2,55 +2,75 @@ package udit.programmer.co.activity
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.preference.PreferenceManager
+import android.view.View
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.ActivityRecognitionClient
+import com.google.android.gms.tasks.OnSuccessListener
+import kotlinx.android.synthetic.main.activity_main.*
 
-var recognised_activity = "None"
+class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
-class MainActivity : AppCompatActivity(), GoogleApiClient.ConnectionCallbacks,
-    GoogleApiClient.OnConnectionFailedListener {
-
+    lateinit var activityRecognitionClient: ActivityRecognitionClient
     val DETECTED_ACTIVITY = ".DETECTED_ACTIVITY"
-    
-    private lateinit var apiClient: GoogleApiClient
-    private var tv = findViewById<TextView>(R.id.text_view)
+    lateinit var adapter: ActivityAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        apiClient = GoogleApiClient.Builder(this)
-            .addApi(ActivityRecognition.API)
-            .addConnectionCallbacks(this)
-            .addOnConnectionFailedListener(this)
-            .build()
-        apiClient.connect()
+        activityRecognitionClient = ActivityRecognitionClient(this)
+        val detectedActivities = ActivityRecognitionServices().detectedActivitiesFromJson(
+            PreferenceManager.getDefaultSharedPreferences(this).getString(DETECTED_ACTIVITY, "")!!
+        )
+
+        this.adapter = ActivityAdapter(detectedActivities)
+        recycler_layout.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
+        recycler_layout.adapter = this.adapter
+
     }
 
-    override fun onConnected(bundle: Bundle?) {
+    override fun onResume() {
+        super.onResume()
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .registerOnSharedPreferenceChangeListener(this)
+        updateDetectedActivityList();
+    }
+
+    override fun onPause() {
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .unregisterOnSharedPreferenceChangeListener(this)
+        super.onPause()
+    }
+
+    private fun requestUpdatesHandler() {
         val intent = Intent(this, ActivityRecognitionServices::class.java)
         val pendingIntent =
             PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-        val task = ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(
-            apiClient,
-            2000,
-            pendingIntent
+        activityRecognitionClient.requestActivityUpdates(2000, pendingIntent)
+            .addOnSuccessListener { updateDetectedActivityList() }
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        if (key.equals(DETECTED_ACTIVITY))
+            updateDetectedActivityList()
+    }
+
+    private fun updateDetectedActivityList() {
+        val detectedActivities = ActivityRecognitionServices().detectedActivitiesFromJson(
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getString(DETECTED_ACTIVITY, "")!!
         )
-        task.setResultCallback{
-
-        }
-    }
-
-    override fun onConnectionSuspended(p0: Int) {
-
-    }
-
-    override fun onConnectionFailed(p0: ConnectionResult) {
-
+        this.adapter.updateActivities(detectedActivities)
     }
 
 }
