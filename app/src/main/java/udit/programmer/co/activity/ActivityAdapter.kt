@@ -1,5 +1,6 @@
 package udit.programmer.co.activity
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -25,8 +26,10 @@ class ActivityAdapter(var list: MutableList<DetectedActivity>) :
             map.put(activity.type, activity.confidence)
         }
         val temporaryList = mutableListOf<DetectedActivity>()
+        Log.d("Ceased Meteor", "Yo man i am here 000 ${temporaryList.size}")
         for (activity in ActivityRecognitionServices().possibleActivities) {
-            temporaryList.add(DetectedActivity(activity, map.get(activity)!!))
+            if (map.containsKey(activity))
+                temporaryList.add(DetectedActivity(activity, map.get(activity)!!))
         }
         list.clear()
         for (activity in temporaryList) {

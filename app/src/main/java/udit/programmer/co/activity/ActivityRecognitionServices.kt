@@ -71,6 +71,7 @@ class ActivityRecognitionServices : IntentService {
             jsonArray,
             object : TypeToken<MutableList<DetectedActivity>>() {}.type
         )
+//        Log.d("Ceased Meteor" , "00 Yo man i am here ${list.size}")
         if (list.isNullOrEmpty()) list = mutableListOf()
         return list
     }

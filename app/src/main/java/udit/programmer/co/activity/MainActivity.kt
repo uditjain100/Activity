@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -27,7 +28,9 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         setContentView(R.layout.activity_main)
 
         activityRecognitionClient = ActivityRecognitionClient(this)
-        val detectedActivities = ActivityRecognitionServices().detectedActivitiesFromJson(
+        requestUpdatesHandler()
+
+        var detectedActivities = ActivityRecognitionServices().detectedActivitiesFromJson(
             PreferenceManager.getDefaultSharedPreferences(this).getString(DETECTED_ACTIVITY, "")!!
         )
 
@@ -37,6 +40,15 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         }
         recycler_layout.adapter = this.adapter
 
+        refresh_btn.setOnClickListener {
+            requestUpdatesHandler()
+            detectedActivities = ActivityRecognitionServices().detectedActivitiesFromJson(
+                PreferenceManager.getDefaultSharedPreferences(this).getString(DETECTED_ACTIVITY, "")!!
+            )
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this)
+            updateDetectedActivityList();
+        }
     }
 
     override fun onResume() {
@@ -56,7 +68,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         val intent = Intent(this, ActivityRecognitionServices::class.java)
         val pendingIntent =
             PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-        activityRecognitionClient.requestActivityUpdates(2000, pendingIntent)
+        activityRecognitionClient.requestActivityUpdates(3000, pendingIntent)
             .addOnSuccessListener { updateDetectedActivityList() }
     }
 
@@ -70,6 +82,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             PreferenceManager.getDefaultSharedPreferences(this)
                 .getString(DETECTED_ACTIVITY, "")!!
         )
+        Log.d("Ceased Meteor", " Yo man i am here ${detectedActivities.size}")
         this.adapter.updateActivities(detectedActivities)
     }
 
